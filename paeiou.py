@@ -25,13 +25,11 @@ def full_substitution(json_string, folder, unit, curr_path):
     #Calls paeiou_substitution on all files in a folder
     (inc_files, json_string) = paeiou_substitution(json_string, folder)
     inc_files = set(inc_files)
-    inc_files.add(unit)
     json_list = [i for i in inc_files if ((i.find('.json') + 1) or (i.find('.pfx') + 1))]
     json_strings = {unit: json_string}
+    inc_files.add(unit)
     while len(json_list):
-        print(json_list)
         curr = json_list.pop(-1)
-        print(curr)
         with open(curr_path + curr) as infile:
             json_string = infile.read()
 
@@ -42,7 +40,75 @@ def full_substitution(json_string, folder, unit, curr_path):
     return (inc_files, json_strings)
 
 
-def server_behavior(unitpath, addlist, savepath, modname):
+def server_behavior(unitpath, addlist, savepath):
+    # for i in addlist:
+    #     curr_path = unitpath + i
+    #     final_path = UNIT_PATH + i
+    #     save_path = savepath + final_path
+
+    #     loc_unit = "unit.json" 
+    #     loc_img = "img.png"
+
+    #     if os.path.isfile(curr_path + "meta.json"):
+    #         with open(curr_path + "meta.json") as infile:
+    #             meta = json.load(infile)
+    #         if "unit" in meta:
+    #             loc_unit = meta["unit"]
+    #         if "img" in meta:
+    #             loc_img = meta["img"]
+    
+    #     with open(curr_path + loc_unit) as infile:
+    #         json_string = infile.read()
+
+    #     (_, json_string) = paeiou_substitution(json_string, i)
+
+    #     unit = json.loads(json_string)
+
+    #     if "tools" in 
+    print("server generation temporarily disabled entirely")
+
+def write_atlas(addlist):
+    name_list = [i.split('/')[-2] for i in addlist]
+
+    js = "var paeiouIcons = ["
+
+    for i in name_list:
+        js = js + f'"{i}",\n'
+    
+    js = js + "];\nmodel.strategicIcons(model.strategicIcons().concat(paeiouIcons));"
+
+    return js
+
+def write_buildbar(build_bar_locs):
+    js = "var newBuild = {\n"
+    for i,j in build_bar_locs.items():
+        js = js + f'"{i}": ["{j[0]}", {j[1]},'
+        js = js + "{ row: " + str(j[2]["row"]) + ", column: " + str(j[2]["column"]) + ", titans: true }],\n"
+    js = js + '\n}\nif (Build && Build.HotkeyModel && Build.HotkeyModel.SpecIdToGridMap) {\n'
+    js = js + '_.extend(Build.HotkeyModel.SpecIdToGridMap, newBuild);\n}'
+
+    return js
+
+def write_unitlist(unit_list):
+    pa_dir_in = "pa_location.txt"
+    if (os.path.isfile(pa_dir_in)):
+        with open(pa_dir_in) as infile:
+            pa_path = infile.readline()
+    else:
+        pa_path = input("Planetary Annihilation installation path: ")
+        with open(pa_dir_in, 'w+') as outfile:
+            outfile.write(pa_path)
+
+    with open(pa_path + "media/pa_ex1/units/unit_list.json") as infile:
+        orig_unit_list = json.load(infile)
+
+    orig_unit_list["units"] = orig_unit_list["units"] + unit_list
+
+    return json.dumps(orig_unit_list)
+
+def client_behavior(unitpath, addlist, savepath, modname):
+    build_bar_locs = {}
+    unit_list = []
     for i in addlist:
         curr_path = unitpath + i
         final_path = UNIT_PATH + i
@@ -50,6 +116,9 @@ def server_behavior(unitpath, addlist, savepath, modname):
 
         loc_unit = "unit.json" 
         loc_img = "img.png"
+        loc_si = "si.png"
+
+        unitname = i.split('/')[-2]
 
         if os.path.isfile(curr_path + "meta.json"):
             with open(curr_path + "meta.json") as infile:
@@ -58,42 +127,58 @@ def server_behavior(unitpath, addlist, savepath, modname):
                 loc_unit = meta["unit"]
             if "img" in meta:
                 loc_img = meta["img"]
+            if "si" in meta:
+                loc_img = meta["si"]
     
         with open(curr_path + loc_unit) as infile:
             json_string = infile.read()
 
-def client_behavior(unitpath, addlist, savepath):
-    for i in addlist:
-        curr_path = unitpath + i
-        final_path = UNIT_PATH + i
-        save_path = savepath + final_path
+        (inc_files, json_strings) = full_substitution(json_string, i, unitname + '.json', curr_path)
 
-        loc_unit = "unit.json" 
-        loc_img = "img.png"
-
-        if os.path.isfile(curr_path + "meta.json"):
-            with open(curr_path + "meta.json") as infile:
-                meta = json.load(infile)
-            if "unit" in meta:
-                loc_unit = meta["unit"]
-            if "img" in meta:
-                loc_img = meta["img"]
-    
-        with open(curr_path + loc_unit) as infile:
-            json_string = infile.read()
-        
-        (inc_files, json_strings) = full_substitution(json_string, i, loc_unit, curr_path)
+        inc_files.update(["model_diffuse.papa", "model_mask.papa", "model_material.papa"])
 
         os.makedirs(save_path, exist_ok=True)
         for j in inc_files:
             savefile = save_path + j
             if j not in json_strings.keys():
-                print("HOI")
                 shutil.copyfile(curr_path + j, savefile)
             else:
                 with open(savefile, 'w') as output:
                     output.write(json_strings[j])
-        shutil.copyfile(curr_path + loc_img, save_path + loc_img[0:-4] + "png")
+        shutil.copyfile(curr_path + loc_img, save_path + unitname + "_icon_buildbar.png")
+
+        with open(curr_path + "build.json") as infile:
+            data = json.load(infile)
+        temp = []
+        temp.append(data["tab"])
+        temp.append(0)
+        temp.append({"row": data["row"],
+                        "column": data["col"],
+                        "titans": True})
+        
+        unit_filename = '/' + final_path + unitname + ".json"
+        build_bar_locs[unit_filename] = temp
+        unit_list.append(unit_filename)
+        
+        si_path = savepath + "ui/main/atlas/icon_atlas/img/strategic_icons/"
+        os.makedirs(si_path, exist_ok=True)
+        shutil.copyfile(curr_path + loc_si, si_path + f"icon_si_{unitname}.png")
+
+    ui_path = savepath + f"ui/mods/{modname}/"
+    icon_atlas_js = ui_path + "icon_atlas.js"
+    build_js = ui_path + "shared_build.js"
+    os.makedirs(ui_path, exist_ok=True)
+
+    with open(build_js, 'w') as out:
+        out.write(write_buildbar(build_bar_locs))
+    with open(icon_atlas_js, 'w') as out:
+        out.write(write_atlas(addlist))
+
+    unit_list_json = savepath + "pa/units/unit_list.json"    
+    with open(unit_list_json, 'w') as out:
+        out.write(write_unitlist(unit_list))
+
+        
 
 
 def direct_function(client, server, test, fullmod, modname, unitpath, addlistpath, savepath): 
@@ -103,12 +188,11 @@ def direct_function(client, server, test, fullmod, modname, unitpath, addlistpat
     for i in range(len(addlist)):
         addlist[i] = addlist[i].rstrip('\n')
 
-    print(addlist)
-
     if client:
-        client_behavior(unitpath, addlist, savepath)
+        client_behavior(unitpath, addlist, savepath + 'client/', modname)
     if server:
-        server_behavior(unitpath, addlist, savepath, modname)
+        # server_behavior(unitpath, addlist, savepath)
+        client_behavior(unitpath, addlist, savepath + 'server/', modname)
 
 @click.command()
 @click.option('--client/--no-client', default=True)
