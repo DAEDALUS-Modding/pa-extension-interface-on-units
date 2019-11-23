@@ -135,7 +135,8 @@ def client_behavior(unitpath, addlist, savepath, modname):
 
         (inc_files, json_strings) = full_substitution(json_string, i, unitname + '.json', curr_path)
 
-        inc_files.update(["model_diffuse.papa", "model_mask.papa", "model_material.papa"])
+        if "model.papa" in inc_files:
+            inc_files.update(["model_diffuse.papa", "model_mask.papa", "model_material.papa"])
 
         os.makedirs(save_path, exist_ok=True)
         for j in inc_files:
