@@ -117,6 +117,7 @@ def client_behavior(unitpath, addlist, savepath, modname):
         loc_unit = "unit.json" 
         loc_img = "img.png"
         loc_si = "si.png"
+        loc_build = "build.json"
 
         unitname = i.split('/')[-2]
 
@@ -128,12 +129,15 @@ def client_behavior(unitpath, addlist, savepath, modname):
             if "img" in meta:
                 loc_img = meta["img"]
             if "si" in meta:
-                loc_img = meta["si"]
+                loc_si = meta["si"]
+            if "build" in meta:
+                loc_build = meta["build"]
     
-        with open(curr_path + loc_unit) as infile:
-            json_string = infile.read()
+        if loc_unit:
+            with open(curr_path + loc_unit) as infile:
+                json_string = infile.read()
 
-        (inc_files, json_strings) = full_substitution(json_string, i, unitname + '.json', curr_path)
+            (inc_files, json_strings) = full_substitution(json_string, i, unitname + '.json', curr_path)
 
         if "model.papa" in inc_files:
             inc_files.update(["model_diffuse.papa", "model_mask.papa", "model_material.papa"])
@@ -146,24 +150,30 @@ def client_behavior(unitpath, addlist, savepath, modname):
             else:
                 with open(savefile, 'w') as output:
                     output.write(json_strings[j])
-        shutil.copyfile(curr_path + loc_img, save_path + unitname + "_icon_buildbar.png")
 
-        with open(curr_path + "build.json") as infile:
-            data = json.load(infile)
-        temp = []
-        temp.append(data["tab"])
-        temp.append(0)
-        temp.append({"row": data["row"],
-                        "column": data["col"],
-                        "titans": True})
+        if loc_img:
+            shutil.copyfile(curr_path + loc_img, save_path + unitname + "_icon_buildbar.png")
+
+        if loc_build:
+            with open(curr_path + loc_build) as infile:
+                data = json.load(infile)
+            temp = []
+            temp.append(data["tab"])
+            temp.append(0)
+            temp.append({"row": data["row"],
+                            "column": data["col"],
+                            "titans": True})
+            
+            unit_filename = '/' + final_path + unitname + ".json"
+            build_bar_locs[unit_filename] = temp
+
+        if loc_unit:
+            unit_list.append(unit_filename)
         
-        unit_filename = '/' + final_path + unitname + ".json"
-        build_bar_locs[unit_filename] = temp
-        unit_list.append(unit_filename)
-        
-        si_path = savepath + "ui/main/atlas/icon_atlas/img/strategic_icons/"
-        os.makedirs(si_path, exist_ok=True)
-        shutil.copyfile(curr_path + loc_si, si_path + f"icon_si_{unitname}.png")
+        if loc_si:
+            si_path = savepath + "ui/main/atlas/icon_atlas/img/strategic_icons/"
+            os.makedirs(si_path, exist_ok=True)
+            shutil.copyfile(curr_path + loc_si, si_path + f"icon_si_{unitname}.png")
 
     ui_path = savepath + f"ui/mods/{modname}/"
     icon_atlas_js = ui_path + "icon_atlas.js"
