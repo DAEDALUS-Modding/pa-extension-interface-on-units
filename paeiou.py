@@ -118,6 +118,7 @@ def client_behavior(unitpath, addlist, savepath, modname):
         loc_img = "img.png"
         loc_si = "si.png"
         loc_build = "build.json"
+        loc_models = ["model.papa"]
 
         unitname = i.split('/')[-2]
 
@@ -132,6 +133,8 @@ def client_behavior(unitpath, addlist, savepath, modname):
                 loc_si = meta["si"]
             if "build" in meta:
                 loc_build = meta["build"]
+            if "models" in meta:
+                loc_models = meta["models"]
     
         if loc_unit:
             with open(curr_path + loc_unit) as infile:
@@ -139,8 +142,10 @@ def client_behavior(unitpath, addlist, savepath, modname):
 
             (inc_files, json_strings) = full_substitution(json_string, i, unitname + '.json', curr_path)
 
-        if "model.papa" in inc_files:
-            inc_files.update(["model_diffuse.papa", "model_mask.papa", "model_material.papa"])
+        for i in loc_models:
+            if i in inc_files:
+                model = i[:-5]
+                inc_files.update([f"{model}_diffuse.papa", f"{model}_mask.papa", f"{model}_material.papa"])
 
         os.makedirs(save_path, exist_ok=True)
         for j in inc_files:
