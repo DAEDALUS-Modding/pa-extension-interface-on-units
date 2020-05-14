@@ -15,7 +15,7 @@ By default, PAEIOU expects the following files in each unit folder:
 - `img.png`
 - `build.json`
 
-`unit.json` is the unit's json file.
+`unit.json` is a templated version of the unit's json file.
 
 `si.png` is the unit's strategic icon as a png file.
 
@@ -25,7 +25,7 @@ By default, PAEIOU expects the following files in each unit folder:
 
 If the unit has a weapon or custom effect files, PAEIOU expects that all weapon, ammo, and effect files will have the ".json" or ".pfx" extension.
 
-If the unit has a custom model, it is expected that this model 
+If the unit has a custom model, it is expected, by default, that the model is named `model.papa` and that its textures are `model_diffuse.papa`, `model_mask.papa`, `model_material.papa`.
 
 In addition, you may change these defaults by including an optional  file, `meta.json`, which can have the following fields, in any order:
 ```
@@ -34,7 +34,7 @@ In addition, you may change these defaults by including an optional  file, `meta
     "si": "(filename)" | false,
     "img": "(filename)" | false,
     "build": "(filename)" | false,
-    "additional": ["other non-json, non-pfx files here, in an array"]
+    "models": ["(filenames)"]
 }
 ```
 
@@ -45,6 +45,9 @@ If `"si"` is set to `false`, the unit will not have a custom strategic icon. If 
 If `"img"` is set to `false`, the unit will not have a custom buildbar image. If it is set to a string, it instead specifies an alternative filename for the buildbar image.
 
 If `"build"` is set to `false`, the unit will not be buildable. If it is set to a string, it instead specifies an alternative filename for PAEIOU's `build.json`.
+
+`"models"` allows one to specify additional models that may be required by auxilliary units like units spawned via attack.
+
 
 For an example where some of these settings may be useful, consider the situation of adding an additional strategic icon through PAEIOU without adding a whole unit, one can use:
 ```
