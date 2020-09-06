@@ -89,7 +89,7 @@ def write_buildbar(build_bar_locs):
 
     return js
 
-def write_unitlist(unit_list):
+def write_unitlist(unit_list, nmu_list):
     pa_dir_in = "pa_location.txt"
     if (os.path.isfile(pa_dir_in)):
         with open(pa_dir_in) as infile:
@@ -102,11 +102,11 @@ def write_unitlist(unit_list):
     with open(pa_path + "media/pa_ex1/units/unit_list.json") as infile:
         orig_unit_list = json.load(infile)
 
-    orig_unit_list["units"] = orig_unit_list["units"] + unit_list
+    orig_unit_list["units"] = orig_unit_list["units"] + nmu_list + unit_list 
 
     return json.dumps(orig_unit_list)
 
-def client_behavior(unitpath, addlist, savepath, modname):
+def client_behavior(unitpath, addlist, savepath, modname, nmu_list = []):
     build_bar_locs = {}
     unit_list = []
     for i in addlist:
@@ -117,6 +117,7 @@ def client_behavior(unitpath, addlist, savepath, modname):
         loc_unit = "unit.json" 
         loc_img = "img.png"
         loc_si = "si.png"
+        loc_build = "build.json"
 
         unitname = i.split('/')[-2]
 
@@ -129,6 +130,8 @@ def client_behavior(unitpath, addlist, savepath, modname):
                 loc_img = meta["img"]
             if "si" in meta:
                 loc_img = meta["si"]
+            if "build" in meta:
+                loc_build = meta["build"]
     
         with open(curr_path + loc_unit) as infile:
             json_string = infile.read()
@@ -146,24 +149,31 @@ def client_behavior(unitpath, addlist, savepath, modname):
             else:
                 with open(savefile, 'w') as output:
                     output.write(json_strings[j])
-        shutil.copyfile(curr_path + loc_img, save_path + unitname + "_icon_buildbar.png")
+        if os.path.exists(curr_path + loc_img):
+            shutil.copyfile(curr_path + loc_img, save_path + unitname + "_icon_buildbar.png")
 
-        with open(curr_path + "build.json") as infile:
-            data = json.load(infile)
-        temp = []
-        temp.append(data["tab"])
-        temp.append(0)
-        temp.append({"row": data["row"],
-                        "column": data["col"],
-                        "titans": True})
-        
         unit_filename = '/' + final_path + unitname + ".json"
-        build_bar_locs[unit_filename] = temp
+
+        if os.path.exists(curr_path + loc_build):
+            with open(curr_path + loc_build) as infile:
+                data = json.load(infile)
+            temp = []
+            temp.append(data["tab"])
+            temp.append(0)
+            temp.append({"row": data["row"],
+                            "column": data["col"],
+                            "titans": True})
+            
+            
+            build_bar_locs[unit_filename] = temp
+            
         unit_list.append(unit_filename)
         
         si_path = savepath + "ui/main/atlas/icon_atlas/img/strategic_icons/"
         os.makedirs(si_path, exist_ok=True)
-        shutil.copyfile(curr_path + loc_si, si_path + f"icon_si_{unitname}.png")
+
+        if os.path.exists(curr_path + loc_si):
+            shutil.copyfile(curr_path + loc_si, si_path + f"icon_si_{unitname}.png")
 
     ui_path = savepath + f"ui/mods/{modname}/"
     icon_atlas_js = ui_path + "icon_atlas.js"
@@ -177,23 +187,29 @@ def client_behavior(unitpath, addlist, savepath, modname):
 
     unit_list_json = savepath + "pa/units/unit_list.json"    
     with open(unit_list_json, 'w') as out:
-        out.write(write_unitlist(unit_list))
+        out.write(write_unitlist(unit_list, nmu_list))
 
         
 
 
-def direct_function(client, server, test, fullmod, modname, unitpath, addlistpath, savepath): 
+def direct_function(client, server, test, fullmod, modname, unitpath, addlistpath, savepath, nmu_path = ""): 
     with open(addlistpath) as infile:
         addlist = infile.readlines()
 
     for i in range(len(addlist)):
         addlist[i] = addlist[i].rstrip('\n')
+    
+    if nmu_path != "":
+        with open(nmu_path) as infile:
+            nmu_list = [i.rstrip('\n') for i in infile.readlines()]
+    else:
+        nmu_path = []
 
     if client:
         client_behavior(unitpath, addlist, savepath + 'client/', modname)
     if server:
         # server_behavior(unitpath, addlist, savepath)
-        client_behavior(unitpath, addlist, savepath + 'server/', modname)
+        client_behavior(unitpath, addlist, savepath + 'server/', modname, nmu_list = nmu_list)
 
 @click.command()
 @click.option('--client/--no-client', default=True)
