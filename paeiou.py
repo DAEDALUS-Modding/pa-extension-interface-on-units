@@ -150,6 +150,9 @@ def client_behavior(unitpath, addlist, savepath, modname):
         os.makedirs(save_path, exist_ok=True)
         for j in inc_files:
             savefile = save_path + j
+            savefolder = os.path.split(savefile)[0]
+            if not os.path.isdir(savefolder):
+                os.makedirs(savefolder, exist_ok=True)
             if j not in json_strings.keys():
                 shutil.copyfile(curr_path + j, savefile)
             else:
