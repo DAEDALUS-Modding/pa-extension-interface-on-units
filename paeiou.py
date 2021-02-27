@@ -4,7 +4,7 @@ import json
 
 import click
 
-UNIT_PATH = "pa/units/PAEIOU/"
+UNIT_PATH = "pa/units/paeiou/"
 SI_PATH = "ui/main/atlas/icon_atlas/img/strategic_icons/"
 
 def paeiou_substitution(json_string, folder):
@@ -38,6 +38,44 @@ def full_substitution(json_string, folder, unit, curr_path):
         inc_files.update(new_inc_files)
         json_strings[curr] = json_string
     return (inc_files, json_strings)
+
+def ai_unit_map_name(unitname, modname):
+    return f"{modname}_paeiou_{unitname}"
+
+
+def handle_ai_file(inp_json_str, folder, unitname, mod_prefix = ""):
+    (_, build_list_str) = paeiou_substitution(inp_json_str, folder)
+    build_list = json.loads(build_list_str)
+    for i, build_test in enumerate(build_list):
+        if "name_suffix" in build_test:
+            name_suffix = build_test.pop("name_suffix")
+        else:
+            name_suffix = i
+
+        if "name" not in build_test:
+            build_test["name"] = f"{mod_prefix}_paeiou_{unitname}_{name_suffix}"
+        
+        build_test["to_build"] = ai_unit_map_name(unitname, mod_prefix)
+
+    out_dict = {
+        "build_list": build_list
+    }
+
+    return json.dumps(out_dict, indent=4, sort_keys=True)
+    
+def write_ai_unit_maps(unitname_list, mod_prefix = ""):
+    out_dict = {
+        "unit_map": {}
+    }
+
+    for unitname in unitname_list:
+        unit_map_name = ai_unit_map_name(unitname, mod_prefix)
+        out_dict["unit_map"][unit_map_name] = {
+            "spec_id": f"/{UNIT_PATH}{unitname}/{unitname}.json"
+        }
+
+    return json.dumps(out_dict, indent=4, sort_keys=True)
+
 
 
 def server_behavior(unitpath, addlist, savepath):
@@ -104,11 +142,12 @@ def write_unitlist(unit_list):
 
     orig_unit_list["units"] = orig_unit_list["units"] + unit_list
 
-    return json.dumps(orig_unit_list)
+    return json.dumps(orig_unit_list, indent=4, sort_keys=True)
 
-def client_behavior(unitpath, addlist, savepath, modname):
+def client_behavior(unitpath, addlist, savepath, modname, mod_prefix = ""):
     build_bar_locs = {}
     unit_list = []
+    ai_unitname_list = set()
     for i in addlist:
         curr_path = unitpath + i
         final_path = UNIT_PATH + i
@@ -119,6 +158,8 @@ def client_behavior(unitpath, addlist, savepath, modname):
         loc_si = "si.png"
         loc_build = "build.json"
         loc_models = ["model.papa"]
+        loc_ai_fab = "ai_fab.json"
+        loc_ai_fac = "ai_fac.json"
 
         unitname = i.split('/')[-2]
 
@@ -135,6 +176,11 @@ def client_behavior(unitpath, addlist, savepath, modname):
                 loc_build = meta["build"]
             if "models" in meta:
                 loc_models = meta["models"]
+            if "ai_fab" in meta:
+                loc_ai = meta["ai"]
+            if "ai_fac" in meta:
+                loc_ai = meta["ai"]
+
     
         if loc_unit:
             with open(curr_path + loc_unit) as infile:
@@ -183,6 +229,32 @@ def client_behavior(unitpath, addlist, savepath, modname):
             os.makedirs(si_path, exist_ok=True)
             shutil.copyfile(curr_path + loc_si, si_path + f"icon_si_{unitname}.png")
 
+        if loc_ai_fab and os.path.exists(curr_path + loc_ai_fab):
+            ai_fab_path = savepath + f"pa/ai/fabber_builds" 
+            os.makedirs(ai_fab_path, exist_ok=True)
+            ai_unitname_list.add(unitname)
+
+            with open(curr_path + loc_ai_fab) as infile:
+                ai_json_str = infile.read()
+
+            ai_json_str = handle_ai_file(ai_json_str, i, unitname, mod_prefix)
+
+            with open(f"{ai_fab_path}/{unitname}.json", "w") as outfile:
+                outfile.write(ai_json_str)
+
+        if loc_ai_fac and os.path.exists(curr_path + loc_ai_fac):
+            ai_fac_path = savepath + f"pa/ai/factory_builds" 
+            os.makedirs(ai_fac_path, exist_ok=True)
+            ai_unitname_list.add(unitname)
+
+            with open(curr_path + loc_ai_fac) as infile:
+                ai_json_str = infile.read()
+
+            ai_json_str = handle_ai_file(ai_json_str, i, unitname, mod_prefix)
+
+            with open(f"{ai_fac_path}/{unitname}.json", "w") as outfile:
+                outfile.write(ai_json_str)
+
     ui_path = savepath + f"ui/mods/{modname}/"
     icon_atlas_js = ui_path + "icon_atlas.js"
     build_js = ui_path + "shared_build.js"
@@ -197,10 +269,15 @@ def client_behavior(unitpath, addlist, savepath, modname):
     with open(unit_list_json, 'w') as out:
         out.write(write_unitlist(unit_list))
 
+    os.makedirs(savepath + "pa/ai/unit_maps/", exist_ok=True)
+    ai_unit_maps_fname = savepath + f"pa/ai/unit_maps/{mod_prefix}_paeiou.json"
+    with open(ai_unit_maps_fname, 'w') as outfile:
+        outfile.write(write_ai_unit_maps(ai_unitname_list, mod_prefix))
+
         
 
 
-def direct_function(client, server, test, fullmod, modname, unitpath, addlistpath, savepath): 
+def direct_function(client, server, test, fullmod, modname, unitpath, addlistpath, savepath, mod_prefix): 
     with open(addlistpath) as infile:
         addlist = infile.readlines()
 
@@ -208,17 +285,17 @@ def direct_function(client, server, test, fullmod, modname, unitpath, addlistpat
         addlist[i] = addlist[i].rstrip('\n')
 
     if client:
-        client_behavior(unitpath, addlist, savepath + 'client/', modname)
+        client_behavior(unitpath, addlist, savepath + 'client/', modname, mod_prefix)
     if server:
         # server_behavior(unitpath, addlist, savepath)
-        client_behavior(unitpath, addlist, savepath + 'server/', modname)
+        client_behavior(unitpath, addlist, savepath + 'server/', modname, mod_prefix)
 
 @click.command()
 @click.option('--client/--no-client', default=True)
 @click.option('--server/--no-server', default=True)
 @click.option('--test/--prod', default=True)
 @click.option('--fullmod/--units-only', default=True)
-@click.argument('modname', default='my_PAEIOU_mod')
+@click.argument('modname', default='my_paeiou_mod')
 @click.argument('unitpath', default='units/', type=click.Path(exists=True))
 @click.argument('addlist', default='unit_add_list.txt', type=click.Path(exists=True))
 @click.argument('savepath', default='gen/', type=click.Path(exists=False))
