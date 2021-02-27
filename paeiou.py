@@ -285,10 +285,10 @@ def direct_function(client, server, test, fullmod, modname, unitpath, addlistpat
         addlist[i] = addlist[i].rstrip('\n')
 
     if client:
-        client_behavior(unitpath, addlist, savepath + 'client/', modname, mod_prefix)
+        client_behavior(unitpath, addlist, savepath, modname, mod_prefix)
     if server:
         # server_behavior(unitpath, addlist, savepath)
-        client_behavior(unitpath, addlist, savepath + 'server/', modname, mod_prefix)
+        client_behavior(unitpath, addlist, savepath, modname, mod_prefix)
 
 @click.command()
 @click.option('--client/--no-client', default=True)
