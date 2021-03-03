@@ -180,6 +180,8 @@ def client_behavior(unitpath, addlist, savepath, modname, mod_prefix = ""):
                 loc_ai = meta["ai"]
             if "ai_fac" in meta:
                 loc_ai = meta["ai"]
+            if "unitname" in meta:
+                unitname = meta["unitname"]
 
     
         if loc_unit:
