@@ -16,7 +16,10 @@ def paeiou_substitution(json_string, folder):
             break
         ind2 = json_string.find('}"')
         filename = json_string[ind1+2:ind2]
-        inc_files.append(filename)
+        if filename[0] != "!":
+            inc_files.append(filename)
+        else:
+            filename = filename[1:]
         json_string = json_string[0:ind1] + '"/' + UNIT_PATH + folder + filename + '"' + json_string[ind2+2:]
     return (inc_files, json_string)
 
