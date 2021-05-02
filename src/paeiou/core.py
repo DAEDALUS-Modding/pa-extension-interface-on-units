@@ -2,8 +2,6 @@ import os
 import shutil
 import json
 
-import click
-
 UNIT_PATH = "pa/units/paeiou/"
 SI_PATH = "ui/main/atlas/icon_atlas/img/strategic_icons/"
 
@@ -279,10 +277,7 @@ def client_behavior(unitpath, addlist, savepath, modname, mod_prefix = ""):
     with open(ai_unit_maps_fname, 'w') as outfile:
         outfile.write(write_ai_unit_maps(ai_unitname_list, mod_prefix))
 
-        
-
-
-def direct_function(client, server, test, fullmod, modname, unitpath, addlistpath, savepath, mod_prefix): 
+def paeiou(client, server, test, fullmod, modname, unitpath, addlistpath, savepath, mod_prefix): 
     with open(addlistpath) as infile:
         addlist = infile.readlines()
 
@@ -294,19 +289,3 @@ def direct_function(client, server, test, fullmod, modname, unitpath, addlistpat
     if server:
         # server_behavior(unitpath, addlist, savepath)
         client_behavior(unitpath, addlist, savepath, modname, mod_prefix)
-
-@click.command()
-@click.option('--client/--no-client', default=True)
-@click.option('--server/--no-server', default=True)
-@click.option('--test/--prod', default=True)
-@click.option('--fullmod/--units-only', default=True)
-@click.argument('modname', default='my_paeiou_mod')
-@click.argument('unitpath', default='units/', type=click.Path(exists=True))
-@click.argument('addlist', default='unit_add_list.txt', type=click.Path(exists=True))
-@click.argument('savepath', default='gen/', type=click.Path(exists=False))
-def main(client, server, test, fullmod, modname, unitpath, addlist, savepath):
-    direct_function(client, server, test, fullmod, modname, unitpath, addlist, savepath)
-    
-
-if __name__ == '__main__':
-    main()

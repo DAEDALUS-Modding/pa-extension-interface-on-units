@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+src/paeiou/__init__.py
+src/paeiou/core.py
+src/paeiou.egg-info/PKG-INFO
+src/paeiou.egg-info/SOURCES.txt
+src/paeiou.egg-info/dependency_links.txt
+src/paeiou.egg-info/top_level.txt
