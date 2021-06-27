@@ -2,10 +2,8 @@
 
 This is a Python script that allows one to easily generate Planetary Annihilation mods that add units to the game. It is currently in a very early state, and is neither complete nor well-documented.
 
-Support will **NOT** be offered for PAEIOU under any circumstances until documentation is complete.
-
 ## Current State
-PAEIOU currently does not allow one to generate split server/client companion mods.
+PAEIOU currently does not yet allow one to generate split server/client companion mods, but this is a planned capability in the future.
 
 ## Format
 
