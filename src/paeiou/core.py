@@ -21,13 +21,26 @@ def paeiou_substitution(json_string, folder):
         json_string = json_string[0:ind1] + '"/' + UNIT_PATH + folder + filename + '"' + json_string[ind2+2:]
     return (inc_files, json_string)
 
+def handle_unit_specific(json_string):
+    unit = json.loads(json_string)
+
+    if "events" in unit:
+        for (k, e) in unit["events"].items():
+            if ("effect_spec" in e) and isinstance(e["effect_spec"], list):
+                temp = ""
+                for spec in e["effect_spec"]:
+                    temp = temp + spec["effect"] + " " + spec["bone"] + " "
+                temp = temp[:-1]
+                unit["events"][k]["effect_spec"] = temp
+
+    return json.dumps(unit, indent=4, sort_keys=True)
 
 def full_substitution(json_string, folder, unit, curr_path):
     #Calls paeiou_substitution on all files in a folder
     (inc_files, json_string) = paeiou_substitution(json_string, folder)
     inc_files = set(inc_files)
     json_list = [i for i in inc_files if ((i.find('.json') + 1) or (i.find('.pfx') + 1))]
-    json_strings = {unit: json_string}
+    json_strings = {unit: handle_unit_specific(json_string)}
     inc_files.add(unit)
     while len(json_list):
         curr = json_list.pop(-1)
@@ -94,8 +107,6 @@ def write_ai_unit_maps(unitname_list, mod_prefix = ""):
         }
 
     return json.dumps(out_dict, indent=4, sort_keys=True)
-
-
 
 def server_behavior(unitpath, addlist, savepath):
     # for i in addlist:
