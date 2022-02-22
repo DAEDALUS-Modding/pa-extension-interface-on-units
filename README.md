@@ -1,6 +1,6 @@
 # Planetary Annihilation Extension Interface On Units (PAEIOU)
 
-This is a Python script that allows one to easily generate Planetary Annihilation mods that add units to the game. It is currently in a very early state, and is neither complete nor well-documented.
+This is a Python library that allows one to generate Planetary Annihilation mods that modify units and add units to the game. It also allows one to simulate modding other server mods in order to modify units that are touched by those mods. It is currently in a very early state, and is neither complete nor well-documented.
 
 ## Current State
 PAEIOU currently does not yet allow one to generate split server/client companion mods, but this is a planned capability in the future.
