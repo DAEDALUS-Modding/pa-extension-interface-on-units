@@ -35,7 +35,11 @@ def simulate_mod_mount(pa_path, mod_urls = {}, dl_path = "download", stage_path 
     for mod in mod_urls.keys():
         # high priority mounts first; low priority overrides later!
         with open(os.path.join(mod_folder, "modinfo.json")) as infile:
-            priority = json.load(infile)["priority"]
+            modinfo = json.load(infile)
+            if "priority" in modinfo:
+                priority = modinfo["priority"]
+            else:
+                priority = 100
             mod_priorities[mod] = priority
 
             for (i, m) in enumerate(mod_order):
