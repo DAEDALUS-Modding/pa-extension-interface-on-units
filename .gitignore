@@ -4,3 +4,4 @@ __pycache__/paeiou.cpython-37.pyc
 __pycache__/paeiou.cpython-37.pyc
 dist/**
 build/**
+src/paeiou.egg-info/**
